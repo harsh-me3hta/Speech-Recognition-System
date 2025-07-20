@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Speech Recognition System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: none;
+            border: none;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #666;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .microphone-section {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .mic-button {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            font-size: 3em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+
+        .mic-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .mic-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .mic-button.recording {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .file-upload-section {
+            border: 2px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-section:hover {
+            background: #f8f9ff;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-upload-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #666;
+            min-height: 30px;
+        }
+
+        .status.recording {
+            color: #ff6b6b;
+        }
+
+        .status.processing {
+            color: #f39c12;
+        }
+
+        .status.success {
+            color: #27ae60;
+        }
+
+        .status.error {
+            color: #e74c3c;
+        }
+
+        .transcript-section {
+            margin-top: 30px;
+        }
+
+        .transcript-box {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 25px;
+            min-height: 200px;
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        .transcript-box.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+            font-style: italic;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .supported-formats {
+            margin-top: 20px;
+            padding: 20px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            font-size: 0.9em;
+            color: #1976d2;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .mic-button {
+                width: 100px;
+                height: 100px;
+                font-size: 2.5em;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Python Speech Recognition</h1>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('microphone')">🎤 Microphone</button>
+            <button class="tab" onclick="switchTab('file')">📁 Upload File</button>
+        </div>
+
+        <div id="microphone-tab" class="tab-content active">
+            <div class="microphone-section">
+                <button id="micButton" class="mic-button" title="Click to start recording">
+                    🎤
+                </button>
+                <div id="micStatus" class="status">Click the microphone to start recording</div>
+                <button id="checkMicBtn" class="btn btn-secondary">Check Microphone</button>
+            </div>
+        </div>
+
+        <div id="file-tab" class="tab-content">
+            <div class="file-upload-section">
+                <h3>Upload Audio File</h3>
+                <p style="margin: 15px 0; color: #666;">
+                    Select an audio file to transcribe
+                </p>
+                <input type="file" id="audioFile" class="file-input" accept=".wav,.mp3,.flac,.m4a,.ogg">
+                <button class="file-upload-btn" onclick="document.getElementById('audioFile').click()">
+                    📎 Choose Audio File
+                </button>
+                <div id="fileName" style="margin-top: 15px; color: #666;"></div>
+                <button id="uploadBtn" class="btn btn-primary" style="margin-top: 15px; display: none;">
+                    🚀 Transcribe File
+                </button>
+            </div>
+            <div id="fileStatus" class="status"></div>
+        </div>
+
+        <div class="transcript-section">
+            <h3>Transcript:</h3>
+            <div id="transcript" class="transcript-box empty">
+                Your transcribed speech will appear here...
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="clearBtn" class="btn btn-secondary">🗑️ Clear Transcript</button>
+            <button id="downloadBtn" class="btn btn-secondary">💾 Download Text</button>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="supported-formats">
+            <strong>Supported Audio Formats:</strong> WAV, MP3, FLAC, M4A, OGG<br>
+            <strong>Requirements:</strong> Python with speech_recognition and pyaudio packages<br>
+            <strong>Note:</strong> Make sure your microphone is connected and working
+        </div>
+    </div>
+
+    <script>
+        let isRecording = false;
+        let currentTranscript = '';
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+
+        // Show alert messages
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // Update status with loading animation
+        function updateStatus(elementId, message, className = '', showLoading = false) {
+            const element = document.getElementById(elementId);
+            element.className = `status ${className}`;
+            element.innerHTML = showLoading ? `<span class="loading"></span>${message}` : message;
+        }
+
+        // Microphone recording
+        document.getElementById('micButton').addEventListener('click', async () => {
+            if (isRecording) {
+                return; // Prevent multiple clicks while recording
+            }
+
+            const micButton = document.getElementById('micButton');
+            const micStatus = document.getElementById('micStatus');
+            
+            isRecording = true;
+            micButton.classList.add('recording');
+            micButton.disabled = true;
+            updateStatus('micStatus', 'Recording... Speak now!', 'recording', true);
+
+            try {
+                const response = await fetch('/transcribe_microphone', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentTranscript += (currentTranscript ? ' ' : '') + data.transcript;
+                    updateTranscript(currentTranscript);
+                    showAlert(data.message, 'success');
+                    updateStatus('micStatus', 'Transcription completed!', 'success');
+                } else {
+                    showAlert(data.error, 'error');
+                    updateStatus('micStatus', data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Failed to connect to server: ' + error.message, 'error');
+                updateStatus('micStatus', 'Connection error', 'error');
+            } finally {
+                isRecording = false;
+                micButton.classList.remove('recording');
+                micButton.disabled = false;
+                setTimeout(() => {
+                    updateStatus('micStatus', 'Click the microphone to start recording');
+                }, 3000);
+            }
+        });
+
+        // Check microphone
+        document.getElementById('checkMicBtn').addEventListener('click', async () => {
+            updateStatus('micStatus', 'Checking microphone...', 'processing', true);
+            
+            try {
+                const response = await fetch('/check_microphone');
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert(`✅ ${data.message}`, 'success');
+                    updateStatus('micStatus', 'Microphone ready!', 'success');
+                } else {
+                    showAlert(data.error, 'error');
+                    updateStatus('micStatus', data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Failed to check microphone: ' + error.message, 'error');
+                updateStatus('micStatus', 'Check failed', 'error');
+            }
+        });
+
+        // File upload handling
+        document.getElementById('audioFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const fileName = document.getElementById('fileName');
+            const uploadBtn = document.getElementById('uploadBtn');
+            
+            if (file) {
+                fileName.textContent = `Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                uploadBtn.style.display = 'inline-block';
+            } else {
+                fileName.textContent = '';
+                uploadBtn.style.display = 'none';
+            }
+        });
+
+        // File upload and transcription
+        document.getElementById('uploadBtn').addEventListener('click', async () => {
+            const fileInput = document.getElementById('audioFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showAlert('Please select an audio file first', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('audio', file);
+            
+            updateStatus('fileStatus', 'Uploading and transcribing file...', 'processing', true);
+
+            try {
+                const response = await fetch('/transcribe_file', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentTranscript += (currentTranscript ? '\n\n' : '') + `[File: ${file.name}]\n${data.transcript}`;
+                    updateTranscript(currentTranscript);
+                    showAlert(data.message, 'success');
+                    updateStatus('fileStatus', 'File transcribed successfully!', 'success');
+                } else {
+                    showAlert(data.error, 'error');
+                    updateStatus('fileStatus', data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Failed to upload file: ' + error.message, 'error');
+                updateStatus('fileStatus', 'Upload failed', 'error');
+            }
+        });
+
+        // Update transcript display
+        function updateTranscript(text) {
+            const transcriptBox = document.getElementById('transcript');
+            
+            if (text.trim()) {
+                transcriptBox.textContent = text;
+                transcriptBox.classList.remove('empty');
+            } else {
+                transcriptBox.textContent = 'Your transcribed speech will appear here...';
+                transcriptBox.classList.add('empty');
+            }
+            
+            transcriptBox.scrollTop = transcriptBox.scrollHeight;
+        }
+
+        // Clear transcript
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            currentTranscript = '';
+            updateTranscript('');
+            showAlert('Transcript cleared', 'info');
+        });
+
+        // Download transcript
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            if (!currentTranscript.trim()) {
+                showAlert('No transcript to download', 'error');
+                return;
+            }
+
+            const blob = new Blob([currentTranscript], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `transcript_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showAlert('Transcript downloaded successfully!', 'success');
+        });
+
+        // Check server connection on load
+        window.addEventListener('load', () => {
+            fetch('/check_microphone')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('🎉 Speech recognition system ready!', 'success');
+                    }
+                })
+                .catch(error => {
+                    showAlert('⚠️ Server connection failed. Please check if the Python server is running.', 'error');
+                });
+        });
+    </script>
+</body>
+</html>
