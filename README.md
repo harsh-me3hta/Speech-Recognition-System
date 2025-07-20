@@ -1,7 +1,7 @@
 # Speech-Recognition-System
 
 
-## Company: CODEC Technologies
+## Company: CODTECH Technologies
 
 ## Name : Harsh Mehta
 
